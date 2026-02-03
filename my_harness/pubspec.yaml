@@ -1,0 +1,21 @@
+name: my_harness
+description: A new Flutter project for Flet Harness.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' # גרסת ה-SDK שתואמת למה שהתקנת
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flet: any # הספרייה שמאפשרת להריץ את ה-UI של פייתון
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test: # חובה בשביל ה-app_test.dart שלנו
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
