@@ -1,0 +1,62 @@
+---
+# --- פוד 1: שרת SFTP ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sftp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sftp-server
+  template:
+    metadata:
+      labels:
+        app: sftp-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: sftp-server
+        image: python:3.9-slim
+        resources:
+           limits:
+             memory: "256Mi"
+             cpu: "500m"
+        env:
+        - name: HOME
+          value: "/tmp"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        command: ["/bin/sh", "-c"]
+        args: 
+          - |
+            pip install --user paramiko && \
+            python /app/sftp_server.py
+        ports:
+        - containerPort: 2222
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+        - name: script-vol
+          mountPath: /app
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: sftp-pvc-rwx # משתמש ב-PVC החדש שתומך ב-RWX
+      - name: script-vol
+        configMap:
+          name: app-scripts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sftp-service # חזרנו לשם המקורי כדי שהפקודה שלך תעבוד
+spec:
+  selector:
+    app: sftp-server # אבל מפנים לפוד החדש והנפרד
+  ports:
+    - name: sftp
+      port: 2222
+      targetPort: 2222
+  type: ClusterIP

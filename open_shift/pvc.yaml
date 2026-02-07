@@ -1,0 +1,12 @@
+# --- דיסק משותף אמיתי (RWX) מבוסס EFS ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sftp-pvc-rwx
+spec:
+  storageClassName: efs-sc # המפתח להצלחה!
+  accessModes:
+    - ReadWriteMany        # מאפשר לשני הפודים לעבוד במקביל
+  resources:
+    requests:
+      storage: 200Mi       # הנפח שעבד לך בבדיקה

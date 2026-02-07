@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-worker
+  template:
+    metadata:
+      labels:
+        app: data-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: worker
+        image: python:3.9-slim
+        resources:
+           limits:
+             memory: "256Mi"
+             cpu: "500m"
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        command: ["python", "/app/worker.py"]
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+        - name: script-vol
+          mountPath: /app
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: sftp-pvc-rwx
+      - name: script-vol
+        configMap:
+          name: app-scripts
