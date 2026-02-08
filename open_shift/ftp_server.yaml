@@ -1,5 +1,3 @@
----
-# --- פוד 1: שרת SFTP ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,43 +16,50 @@ spec:
         runAsNonRoot: true
       containers:
       - name: sftp-server
-        image: python:3.9-slim
+        # --- השינוי הגדול: שימוש באימג' שלך ---
+        # (החלף את הכתובת לכתובת האמיתית ב-GCP שלך)
+        image: me-west1-docker.pkg.dev/sky-geo-dig-dev-u-dlab-1/production-system/sftp-server:v1
+
+        # --- ניקוי: מחקנו את command ו-args ---
+        # (האימג' כבר יודע להריץ את השרת לבד)
+
         resources:
            limits:
              memory: "256Mi"
              cpu: "500m"
+
+        # הגדרת משתנים (אופציונלי - אם לא תגדיר, יילקחו ברירות המחדל מה-Dockerfile)
         env:
-        - name: HOME
-          value: "/tmp"
+        - name: SFTP_USER
+          value: "user1"     # או למשוך מ-Secret
+        - name: SFTP_PASS
+          value: "pass123"   # או למשוך מ-Secret
+        - name: ALLOW_DELETE
+          value: "true"
         - name: PYTHONUNBUFFERED
           value: "1"
-        command: ["/bin/sh", "-c"]
-        args: 
-          - |
-            pip install --user paramiko && \
-            python /app/sftp_server.py
+
         ports:
         - containerPort: 2222
+
         volumeMounts:
         - name: storage
           mountPath: /data
-        - name: script-vol
-          mountPath: /app
+        # --- ניקוי: לא צריך יותר למפות את script-vol (/app) ---
+
       volumes:
       - name: storage
         persistentVolumeClaim:
-          claimName: sftp-pvc-rwx # משתמש ב-PVC החדש שתומך ב-RWX
-      - name: script-vol
-        configMap:
-          name: app-scripts
+          claimName: sftp-pvc-rwx
+      # --- ניקוי: לא צריך יותר את ה-ConfigMap של הסקריפטים ---
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sftp-service # חזרנו לשם המקורי כדי שהפקודה שלך תעבוד
+  name: sftp-service
 spec:
   selector:
-    app: sftp-server # אבל מפנים לפוד החדש והנפרד
+    app: sftp-server
   ports:
     - name: sftp
       port: 2222
